@@ -20,6 +20,7 @@ interface BoardAttributes {
 interface ListAttributes {
   id: number;
   title: string;
+  boardId: number;
   createdAt?: Date;
   updatedAt?: Date;
 }
@@ -27,7 +28,8 @@ interface ListAttributes {
 interface CardAttributes {
   id: number;
   title: string;
-  description: string;
+  description?: string;
+  listId: number;
   createdAt?: Date;
   updatedAt?: Date;
 }
@@ -106,9 +108,8 @@ class CardModel extends Model<CardAttributes, CardCreationAttributes> {
   @Column(DataTypes.STRING)
   declare title: string;
 
-  @AllowNull(false)
   @Column(DataTypes.STRING)
-  declare description: string;
+  declare description?: string;
 
   @CreatedAt
   @Column(DataTypes.DATE)

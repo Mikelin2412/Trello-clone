@@ -23,11 +23,13 @@ ListModel.belongsTo(BoardModel, {
 
 ListModel.hasMany(CardModel, {
   foreignKey: "listId",
+  as: "cards",
   onDelete: "CASCADE",
   onUpdate: "CASCADE",
 });
 CardModel.belongsTo(ListModel, {
   foreignKey: "listId",
+  as: "list",
   onDelete: "CASCADE",
   onUpdate: "CASCADE",
 });

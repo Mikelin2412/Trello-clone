@@ -23,3 +23,38 @@ export const boardListColumnsContainer = style({
   overflowY: "hidden",
   whiteSpace: "nowrap",
 });
+
+export const listItemBlock = style({
+  width: "225px",
+  padding: "0 6px 0 0",
+  flexShrink: 0,
+  display: "flex",
+  flexDirection: "column",
+});
+
+export const addListButton = style({
+  alignSelf: 'flex-start',
+  padding: "12px",
+  fontSize: "1rem",
+  backgroundColor: "#ffffff3d",
+  color: "white",
+  border: "none",
+  borderRadius: "12px",
+  cursor: "pointer",
+  ":hover": {
+    backgroundColor: "#b3b3b33d",
+  },
+});
+
+export const inputBlock = style({
+  display: "flex",
+  flexDirection: "column",
+  gap: "8px",
+});
+
+export const inputField = style({
+  padding: "8px",
+  fontSize: "1rem",
+  border: "1px solid #dfe1e6",
+  borderRadius: "12px",
+});

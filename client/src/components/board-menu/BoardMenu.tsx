@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   actions,
   boardItem,
@@ -13,8 +13,19 @@ import {
   header,
   input,
   saveButton,
+  selectedBoardItem,
   sidebar,
 } from "./styles.css";
+import { useAppSelector, useAppDispatch } from "../../store/hooks";
+import {
+  removeBoard,
+  editBoard,
+  selectBoards,
+  addBoard,
+  fetchAllBoards,
+  getSelectedBoard,
+  setSelectedBoard,
+} from "../../store/slices/boardSlice";
 
 interface Board {
   id: number;
@@ -22,25 +33,18 @@ interface Board {
 }
 
 const BoardMenu: React.FC = () => {
-  const [boards, setBoards] = useState<Board[]>([
-    {
-      id: 1,
-      title: "First Board",
-    },
-    {
-      id: 2,
-      title: "Second Board",
-    },
-    {
-      id: 3,
-      title: "Third Board",
-    },
-  ]);
+  const { boards } = useAppSelector(selectBoards);
+  const selectedBoard = useAppSelector(getSelectedBoard);
+  const dispatch = useAppDispatch();
   const [newBoardTitle, setNewBoardTitle] = useState("");
-  const [editBoard, setEditBoard] = useState<{
+  const [editableBoard, setEditableBoard] = useState<{
     id: number;
     title: string;
   } | null>(null);
+
+  useEffect(() => {
+    dispatch(fetchAllBoards());
+  }, [dispatch])
 
   const handleCreateBoard = () => {
     if (!newBoardTitle.trim()) return;
@@ -50,21 +54,23 @@ const BoardMenu: React.FC = () => {
       title: newBoardTitle,
     };
 
-    setBoards([...boards, newBoard]);
+    dispatch(addBoard(newBoard.title));
     setNewBoardTitle("");
   };
 
   const handleDeleteBoard = (id: number) => {
-    setBoards(boards.filter((board) => board.id !== id));
+    dispatch(removeBoard(id));
   };
 
   const handleEditBoard = (id: number, newTitle: string) => {
-    setBoards(
-      boards.map((board) =>
-        board.id === id ? { ...board, title: newTitle } : board
-      )
-    );
-    setEditBoard(null);
+    if (!newTitle.trim()) return;
+
+    dispatch(editBoard({ id, title: newTitle }));
+    setEditableBoard(null);
+  };
+
+  const handleSelectBoard = (board: Board) => {
+    dispatch(setSelectedBoard(board));
   };
 
   return (
@@ -72,26 +78,35 @@ const BoardMenu: React.FC = () => {
       <h2 className={header}>My Boards</h2>
       <div className={boardList}>
         {boards.map((board) => (
-          <div key={board.id} className={boardItem}>
-            {editBoard?.id === board.id ? (
+          <div
+            key={board.id}
+            className={`${boardItem} ${
+              selectedBoard?.id === board.id ? selectedBoardItem : ""
+            }`}
+            onClick={() => handleSelectBoard(board)}
+          >
+            {editableBoard?.id === board.id ? (
               <div className={editWrapper}>
                 <input
                   type="text"
-                  value={editBoard.title}
+                  value={editableBoard.title}
                   onChange={(e) =>
-                    setEditBoard({ ...editBoard, title: e.target.value })
+                    setEditableBoard({
+                      ...editableBoard,
+                      title: e.target.value,
+                    })
                   }
                   className={input}
                 />
                 <button
                   className={saveButton}
-                  onClick={() => handleEditBoard(board.id, editBoard.title)}
+                  onClick={() => handleEditBoard(board.id, editableBoard.title)}
                 >
                   Save
                 </button>
                 <button
                   className={cancelButton}
-                  onClick={() => setEditBoard(null)}
+                  onClick={() => setEditableBoard(null)}
                 >
                   Cancel
                 </button>
@@ -102,15 +117,19 @@ const BoardMenu: React.FC = () => {
                 <div className={actions}>
                   <button
                     className={editButton}
-                    onClick={() =>
-                      setEditBoard({ id: board.id, title: board.title })
-                    }
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setEditableBoard({ id: board.id, title: board.title });
+                    }}
                   >
                     Edit
                   </button>
                   <button
                     className={deleteButton}
-                    onClick={() => handleDeleteBoard(board.id)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleDeleteBoard(board.id);
+                    }}
                   >
                     Delete
                   </button>

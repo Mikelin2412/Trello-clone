@@ -1,28 +1,43 @@
-import { ListModel } from "../models/models";
+import { CardModel, ListModel } from "../models/models";
 
 class ListService {
   static async createList(data: { title: string; boardId: number }) {
-    return await ListModel.create(data);
-  }
+    const list = await ListModel.create(data);
 
-  static async getAllLists() {
-    return await ListModel.findAll();
+    const fullListWithCards = await ListModel.findByPk(list.id, {
+      include: [
+        {
+          model: CardModel,
+          as: "cards",
+        },
+      ],
+    });
+
+    return fullListWithCards;
   }
 
   static async getListById(id: number) {
     return await ListModel.findByPk(id);
   }
 
-  static async updateList(id: number, data: Partial<{ title: string }>) {
+  static async updateList(id: number, data: { title: string }) {
     const list = await ListModel.findByPk(id);
     if (!list) throw new Error("List not found");
-    return await list.update(data);
+    const updatedList = await list.update(data);
+    return updatedList;
   }
 
   static async deleteList(id: number) {
     const list = await ListModel.findByPk(id);
     if (!list) throw new Error("List not found");
     await list.destroy();
+  }
+
+  static async getAllCardsForList(id: number) {
+    const cards = await CardModel.findAll({
+      where: { listId: id },
+    });
+    return cards;
   }
 }
 

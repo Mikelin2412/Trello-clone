@@ -1,4 +1,4 @@
-import { BoardModel } from "../models/models";
+import { BoardModel, CardModel, ListModel } from "../models/models";
 
 class BoardService {
   static async createBoard(title: string): Promise<BoardModel> {
@@ -9,14 +9,6 @@ class BoardService {
   static async getAllBoards(): Promise<BoardModel[]> {
     const boards = await BoardModel.findAll();
     return boards;
-  }
-
-  static async getBoardById(id: number): Promise<BoardModel | null> {
-    const board = await BoardModel.findByPk(id);
-    if (!board) {
-      console.log("Board not found!");
-    }
-    return board;
   }
 
   static async updateBoardTitle(
@@ -41,6 +33,19 @@ class BoardService {
     }
     await board.destroy();
     return board;
+  }
+
+  static async getAllListsForBoard(boardId: number) {
+    const lists = await ListModel.findAll({
+      where: { boardId },
+      include: [
+        {
+          model: CardModel,
+          as: "cards",
+        },
+      ],
+    });
+    return lists;
   }
 }
 

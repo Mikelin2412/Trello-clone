@@ -3,14 +3,9 @@ import { CardModel } from "../models/models";
 class CardService {
   static async createCard(data: {
     title: string;
-    description: string;
     listId: number;
   }) {
     return await CardModel.create(data);
-  }
-
-  static async getAllCards() {
-    return await CardModel.findAll();
   }
 
   static async getCardById(id: number) {
@@ -23,7 +18,8 @@ class CardService {
   ) {
     const card = await CardModel.findByPk(id);
     if (!card) throw new Error("Card not found");
-    return await card.update(data);
+    const updatedCard = await card.update(data);
+    return updatedCard;
   }
 
   static async deleteCard(id: number) {

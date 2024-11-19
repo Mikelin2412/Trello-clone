@@ -31,6 +31,7 @@ export const boardItem = style({
   backgroundColor: "inherit",
   borderTop: "1px solid #626262",
   color: "#9fadbc",
+  cursor: "pointer",
 });
 
 export const boardTitle = style({
@@ -121,4 +122,9 @@ export const createButton = style({
   border: "none",
   borderRadius: "4px",
   cursor: "pointer",
+});
+
+export const selectedBoardItem = style({
+  backgroundColor: "#ffffff1c",
+  borderRadius: "4px",
 });
