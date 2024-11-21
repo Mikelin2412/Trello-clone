@@ -1,12 +1,12 @@
 export const ItemTypes = {
   CARD: "card",
-  LIST: "list",
 };
 
 export interface CardType {
   id: number;
   title: string;
   description: string;
+  order: number;
   listId: number;
 }
 
@@ -20,4 +20,10 @@ export interface ListType {
 export interface Board {
   id: number;
   title: string;
+}
+
+export interface ActivityLog {
+  id: number;
+  action: string;
+  createdAt: string;
 }

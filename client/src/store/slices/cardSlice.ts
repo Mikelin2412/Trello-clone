@@ -34,8 +34,8 @@ export const fetchCardsForList = createAsyncThunk(
 
 export const addCard = createAsyncThunk(
   "addCard",
-  async (data: { title: string; listId: number }) => {
-    const response = await createCard(data.title, data.listId);
+  async (data: { title: string; order: number; listId: number }) => {
+    const response = await createCard(data.title, data.order, data.listId);
     return response.data;
   }
 );

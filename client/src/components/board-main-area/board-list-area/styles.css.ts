@@ -2,7 +2,6 @@ import { style } from "@vanilla-extract/css";
 
 export const boardListArea = style({
   margin: "12px 0 12px 12px",
-  backgroundColor: "rgb(0, 0, 0, 0.5)",
   flex: 1,
   position: "relative",
 });

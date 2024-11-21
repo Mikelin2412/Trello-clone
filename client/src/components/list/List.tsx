@@ -11,8 +11,7 @@ import {
   listButtonsContainer,
 } from "./styles.css";
 import CardsContainer from "../cards-container/CardsContainer";
-import { useDrag } from "react-dnd";
-import { ItemTypes, ListType } from "../../types/types";
+import { ListType } from "../../types/types";
 import { useAppDispatch } from "../../store/hooks";
 import {
   addCardToList,
@@ -30,16 +29,9 @@ const List: React.FC<Pick<ListType, "id" | "title" | "cards">> = ({
   const [newCardTitle, setNewCardTitle] = useState("");
   const dispatch = useAppDispatch();
 
-  const [_, drag] = useDrag(() => ({
-    type: ItemTypes.LIST,
-    collect: (monitor) => ({
-      isDragging: !!monitor.isDragging(),
-    }),
-  }));
-
   const handleAddCard = () => {
     if (!newCardTitle.trim()) return;
-    dispatch(addCardToList({ title: newCardTitle, listId: id }));
+    dispatch(addCardToList({ title: newCardTitle, order: cards.length, listId: id }));
     setNewCardTitle("");
   };
 
@@ -57,7 +49,7 @@ const List: React.FC<Pick<ListType, "id" | "title" | "cards">> = ({
   };
 
   return (
-    <div className={listBody} ref={drag}>
+    <div className={listBody}>
       <div className={listHeader}>
         {isEditing ? (
           <>
@@ -96,7 +88,10 @@ const List: React.FC<Pick<ListType, "id" | "title" | "cards">> = ({
           </>
         )}
       </div>
-      <CardsContainer id={id} cards={cards} />
+      <CardsContainer
+        id={id}
+        cards={cards}
+      />
       <div className={listFooter}>
         <input
           type="text"

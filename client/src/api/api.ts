@@ -11,14 +11,16 @@ export const getListsForBoard = (boardId: number) =>
   axiosApi.get(`/boards/${boardId}`);
 export const getCardsForList = (listId: number) =>
   axiosApi.get(`/lists/${listId}`);
+export const getAllActivityLog = (boardId: number) =>
+  axiosApi.get(`/boards/${boardId}/activity`);
 
 // POST REQUESTS
 export const createBoard = (title: string) =>
   axiosApi.post("/boards", { title });
 export const createList = (title: string, boardId: number) =>
   axiosApi.post("/lists", { title, boardId });
-export const createCard = (title: string, listId: number) =>
-  axiosApi.post("/cards", { title, listId });
+export const createCard = (title: string, order: number, listId: number) =>
+  axiosApi.post("/cards", { title, order, listId });
 
 // PUT REQUESTS
 export const editBoardTitle = (boardId: number, title: string) =>
@@ -38,3 +40,15 @@ export const deleteList = (listId: number) =>
   axiosApi.delete(`/lists/${listId}`);
 export const deleteCard = (cardId: number) =>
   axiosApi.delete(`/cards/${cardId}`);
+
+// PATCH REQUESTS
+export const reorderCardApi = (
+  cardId: number,
+  targetOrder: number,
+  listId: number
+) =>
+  axiosApi.patch(`/cards/changeOrder`, {
+    cardId,
+    targetOrder,
+    listId,
+  });

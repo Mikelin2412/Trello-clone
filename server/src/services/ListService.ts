@@ -1,4 +1,4 @@
-import { CardModel, ListModel } from "../models/models";
+import { ActivityLogModel, CardModel, ListModel } from "../models/models";
 
 class ListService {
   static async createList(data: { title: string; boardId: number }) {
@@ -24,6 +24,12 @@ class ListService {
     const list = await ListModel.findByPk(id);
     if (!list) throw new Error("List not found");
     const updatedList = await list.update(data);
+
+    await ActivityLogModel.create({
+      boardId: list.boardId,
+      action: `List title updated: "${list.title}"`,
+    });
+
     return updatedList;
   }
 
@@ -31,6 +37,11 @@ class ListService {
     const list = await ListModel.findByPk(id);
     if (!list) throw new Error("List not found");
     await list.destroy();
+
+    await ActivityLogModel.create({
+      boardId: list.boardId,
+      action: `Delete list "${list.title}"`,
+    });
   }
 
   static async getAllCardsForList(id: number) {

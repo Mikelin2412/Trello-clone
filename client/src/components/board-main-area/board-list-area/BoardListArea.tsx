@@ -8,8 +8,6 @@ import {
   listItemBlock,
 } from "./styles.css";
 import List from "../../list/List";
-import { useDrop } from "react-dnd";
-import { ItemTypes } from "../../../types/types";
 import { useAppDispatch, useAppSelector } from "../../../store/hooks";
 import {
   addNewList,
@@ -22,15 +20,6 @@ const BoardListArea: React.FC = () => {
   const lists = useAppSelector(selectLists);
   const selectedBoard = useAppSelector(getSelectedBoard);
   const dispatch = useAppDispatch();
-  const [{ isOver }, drop] = useDrop(
-    () => ({
-      accept: ItemTypes.LIST,
-      collect: (monitor) => ({
-        isOver: !!monitor.isOver(),
-      }),
-    }),
-    []
-  );
 
   const [newListTitle, setNewListTitle] = useState("");
   const [isAdding, setIsAdding] = useState(false);
@@ -51,21 +40,10 @@ const BoardListArea: React.FC = () => {
       {selectedBoard?.id && (
         <ol className={boardListColumnsContainer}>
           {lists.map((list) => (
-            <li key={list.id} className={listItemBlock} ref={drop}>
+            <li key={list.id} className={listItemBlock}>
               <List id={list.id} title={list.title} cards={list.cards} />
             </li>
           ))}
-          {isOver && (
-            <div
-              style={{
-                width: "100%",
-                height: "50px",
-                zIndex: 1,
-                opacity: 0.5,
-                backgroundColor: "yellow",
-              }}
-            />
-          )}
           {!isAdding ? (
             <button className={addListButton} onClick={() => setIsAdding(true)}>
               + Add new list

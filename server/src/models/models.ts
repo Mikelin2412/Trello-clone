@@ -8,6 +8,8 @@ import {
   AllowNull,
   CreatedAt,
   UpdatedAt,
+  ForeignKey,
+  BelongsTo,
 } from "sequelize-typescript";
 
 interface BoardAttributes {
@@ -29,9 +31,17 @@ interface CardAttributes {
   id: number;
   title: string;
   description?: string;
+  order: number;
   listId: number;
   createdAt?: Date;
   updatedAt?: Date;
+}
+
+interface ActivityLogAttributes {
+  id: number;
+  action: string;
+  boardId: number;
+  createdAt?: Date;
 }
 
 interface BoardCreationAttributes
@@ -40,6 +50,8 @@ interface ListCreationAttributes
   extends Optional<ListAttributes, "id" | "createdAt" | "updatedAt"> {}
 interface CardCreationAttributes
   extends Optional<CardAttributes, "id" | "createdAt" | "updatedAt"> {}
+interface ActivityLogCreationAttributes
+  extends Optional<ActivityLogAttributes, "id" | "createdAt"> {}
 
 @Table({
   tableName: "Boards",
@@ -67,7 +79,7 @@ class BoardModel extends Model<BoardAttributes, BoardCreationAttributes> {
 
 @Table({
   tableName: "Lists",
-  timestamps: false,
+  timestamps: true,
 })
 class ListModel extends Model<ListAttributes, ListCreationAttributes> {
   @PrimaryKey
@@ -95,7 +107,7 @@ class ListModel extends Model<ListAttributes, ListCreationAttributes> {
 
 @Table({
   tableName: "Cards",
-  timestamps: false,
+  timestamps: true,
 })
 class CardModel extends Model<CardAttributes, CardCreationAttributes> {
   @PrimaryKey
@@ -121,7 +133,42 @@ class CardModel extends Model<CardAttributes, CardCreationAttributes> {
 
   @AllowNull(false)
   @Column(DataTypes.INTEGER)
+  declare order: number;
+
+  @AllowNull(false)
+  @Column(DataTypes.INTEGER)
   declare listId: number;
 }
 
-export { BoardModel, ListModel, CardModel };
+@Table({
+  tableName: "ActivityLogs",
+  timestamps: true,
+})
+class ActivityLogModel extends Model<
+  ActivityLogAttributes,
+  ActivityLogCreationAttributes
+> {
+  @PrimaryKey
+  @AutoIncrement
+  @AllowNull(false)
+  @Column(DataTypes.INTEGER)
+  declare id: CreationOptional<number>;
+
+  @AllowNull(false)
+  @Column(DataTypes.STRING)
+  declare action: string;
+
+  @AllowNull(false)
+  @ForeignKey(() => BoardModel)
+  @Column(DataTypes.INTEGER)
+  declare boardId: number;
+
+  @BelongsTo(() => BoardModel)
+  declare board: BoardModel;
+
+  @CreatedAt
+  @Column(DataTypes.DATE)
+  declare createdAt: CreationOptional<Date>;
+}
+
+export { BoardModel, ListModel, CardModel, ActivityLogModel };

@@ -1,4 +1,4 @@
-import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
+import { createAsyncThunk, createSlice, PayloadAction } from "@reduxjs/toolkit";
 import type { RootState } from "../store";
 import {
   createCard,
@@ -8,6 +8,7 @@ import {
   editCard,
   editListTitle,
   getListsForBoard,
+  reorderCardApi,
 } from "../../api/api";
 import { CardType } from "../../types/types";
 
@@ -37,8 +38,16 @@ export const fetchListsForBoard = createAsyncThunk(
 
 export const addCardToList = createAsyncThunk(
   "addCardToList",
-  async ({ title, listId }: { title: string; listId: number }) => {
-    const response = await createCard(title, listId);
+  async ({
+    title,
+    order,
+    listId,
+  }: {
+    title: string;
+    order: number;
+    listId: number;
+  }) => {
+    const response = await createCard(title, order, listId);
     return { card: response.data, listId };
   }
 );
@@ -80,10 +89,64 @@ export const removeCard = createAsyncThunk(
   }
 );
 
+export const reorderCard = createAsyncThunk(
+  "reorderCard",
+  async ({
+    cardId,
+    targetOrder,
+    listId,
+  }: {
+    cardId: number;
+    targetOrder: number;
+    listId: number;
+  }) => {
+    const response = await reorderCardApi(cardId, targetOrder, listId);
+    return response.data;
+  }
+);
+
 export const listsSlice = createSlice({
   name: "lists",
   initialState,
-  reducers: {},
+  reducers: {
+    changeCardsOrder: (
+      state,
+      action: PayloadAction<{
+        cardId: number;
+        sourceListId: number;
+        targetListId: number;
+        targetOrder: number;
+      }>
+    ) => {
+      const { cardId, sourceListId, targetListId, targetOrder } =
+        action.payload;
+
+      const sourceList = state.lists.find((list) => list.id === sourceListId);
+      const targetList = state.lists.find((list) => list.id === targetListId);
+
+      if (!sourceList || !targetList) return;
+
+      const cardIndex = sourceList.cards.findIndex(
+        (card) => card.id === cardId
+      );
+      const [movedCard] = sourceList.cards.splice(cardIndex, 1);
+      targetList.cards.splice(targetOrder, 0, movedCard);
+
+      targetList.cards = targetList.cards.map((card, index) => ({
+        ...card,
+        order: index,
+      }));
+
+      if (sourceListId === targetListId) {
+        sourceList.cards = [...targetList.cards];
+      } else {
+        sourceList.cards = sourceList.cards.map((card, index) => ({
+          ...card,
+          order: index,
+        }));
+      }
+    },
+  },
   extraReducers: (builder) => {
     builder
       .addCase(fetchListsForBoard.pending, (state) => {
@@ -131,6 +194,16 @@ export const listsSlice = createSlice({
         }
       })
 
+      .addCase(reorderCard.fulfilled, (state, action) => {
+        const updatedCard = action.payload;
+        const list = state.lists.find((list) => list.id === updatedCard.listId);
+        if (list) {
+          list.cards = list.cards
+            .map((card) => (card.id === updatedCard.id ? updatedCard : card))
+            .sort((a, b) => a.order - b.order);
+        }
+      })
+
       .addCase(removeList.fulfilled, (state, action) => {
         const id = action.payload;
         state.lists = state.lists.filter((list) => list.id !== id);
@@ -145,6 +218,7 @@ export const listsSlice = createSlice({
   },
 });
 
+export const { changeCardsOrder } = listsSlice.actions;
 export const selectLists = (state: RootState) => state.lists.lists;
 export const selectListLoading = (state: RootState) => state.lists.loading;
 export default listsSlice.reducer;

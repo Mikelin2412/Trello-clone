@@ -1,13 +1,13 @@
 import { Dialect } from "sequelize";
 import { Sequelize } from "sequelize-typescript";
-import { BoardModel, ListModel, CardModel } from "./models/models";
+import { BoardModel, ListModel, CardModel, ActivityLogModel } from "./models/models";
 
 export default new Sequelize({
   database: process.env.DB_NAME,
   dialect: process.env.DB_DIALECT as Dialect,
   username: process.env.DB_USERNAME,
   password: process.env.DB_PASSWORD,
-  models: [BoardModel, ListModel, CardModel],
+  models: [BoardModel, ListModel, CardModel, ActivityLogModel],
 });
 
 BoardModel.hasMany(ListModel, {
