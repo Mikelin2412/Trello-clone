@@ -7,6 +7,7 @@ export const listBody = style({
   display: "flex",
   flexDirection: "column",
   padding: "0 8px",
+  maxHeight: "100%",
 });
 
 export const listHeader = style({
@@ -87,4 +88,5 @@ export const cardsContainer = style({
   display: "flex",
   flexDirection: "column",
   gap: "8px",
+  overflowY: "scroll",
 });

@@ -11,18 +11,19 @@ import {
   listButtonsContainer,
   cardsContainer,
 } from "./styles.css";
-import { CardType, ItemTypes, ListType } from "../../types/types";
+import { ItemTypes, ListType } from "../../types/types";
 import { useAppDispatch, useAppSelector } from "../../store/hooks";
 import {
   addCardToList,
-  changeCardsOrderValues,
   moveCardToAnotherList,
   removeList,
   reorderCardsByHover,
+  sendReorderedListsToApi,
   updateListTitle,
 } from "../../store/slices/listSlice";
 import Card from "../card/Card";
 import { useDrop } from "react-dnd";
+import { store } from "../../store/store";
 
 const List: React.FC<Pick<ListType, "id" | "title" | "cards">> = ({ id }) => {
   const dispatch = useAppDispatch();
@@ -37,7 +38,7 @@ const List: React.FC<Pick<ListType, "id" | "title" | "cards">> = ({ id }) => {
 
   const [, drop] = useDrop({
     accept: ItemTypes.CARD,
-    drop: (card: { id: number; index: number; listId: number }, monitor) => {
+    drop: (card: { id: number; index: number; listId: number }, _) => {
       if (card.listId !== id) {
         dispatch(
           moveCardToAnotherList({
@@ -48,6 +49,8 @@ const List: React.FC<Pick<ListType, "id" | "title" | "cards">> = ({ id }) => {
           })
         );
       }
+      const updatedLists = store.getState().lists.lists;
+      dispatch(sendReorderedListsToApi(updatedLists));
     },
     collect: (monitor) => ({
       isOver: monitor.isOver(),

@@ -59,11 +59,12 @@ const Card: React.FC<Props & Omit<CardType, "order">> = ({
         moveCard(dragIndex, hoverIndex);
         card.index = hoverIndex;
       } else {
-        console.log(hoverIndex);
         handleHoveredIndex(hoverIndex);
       }
     },
-    drop: () => dispatch(changeCardsOrderValues()),
+    drop: () => {
+      dispatch(changeCardsOrderValues());
+    },
   });
 
   const [{ isDragging }, drag] = useDrag({

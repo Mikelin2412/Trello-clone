@@ -8,18 +8,12 @@ import {
   editCard,
   editListTitle,
   getListsForBoard,
-  reorderCardApi,
+  reorderListsApi,
 } from "../../api/api";
-import { CardType } from "../../types/types";
-
-interface List {
-  id: number;
-  title: string;
-  cards: CardType[];
-}
+import { ListType } from "../../types/types";
 
 interface ListState {
-  lists: List[];
+  lists: Omit<ListType, "boardId">[];
   loading: boolean;
 }
 
@@ -97,18 +91,10 @@ export const removeCard = createAsyncThunk(
   }
 );
 
-export const reorderCard = createAsyncThunk(
-  "reorderCard",
-  async ({
-    cardId,
-    targetOrder,
-    listId,
-  }: {
-    cardId: number;
-    targetOrder: number;
-    listId: number;
-  }) => {
-    const response = await reorderCardApi(cardId, targetOrder, listId);
+export const sendReorderedListsToApi = createAsyncThunk(
+  "sendReorderedListsToApi",
+  async (lists: Omit<ListType, "boardId">[]) => {
+    const response = await reorderListsApi(lists);
     return response.data;
   }
 );
@@ -123,7 +109,7 @@ export const listsSlice = createSlice({
         cardId: number;
         sourceListId: number;
         targetListId: number;
-        targetIndex: number,
+        targetIndex: number;
       }>
     ) => {
       const { cardId, sourceListId, targetListId, targetIndex } =
@@ -176,10 +162,13 @@ export const listsSlice = createSlice({
       .addCase(fetchListsForBoard.pending, (state) => {
         state.loading = true;
       })
-      .addCase(fetchListsForBoard.fulfilled, (state, action) => {
-        state.lists = action.payload;
-        state.loading = false;
-      })
+      .addCase(
+        fetchListsForBoard.fulfilled,
+        (state, action: PayloadAction<Omit<ListType, "boardId">[]>) => {
+          state.lists = action.payload;
+          state.loading = false;
+        }
+      )
       .addCase(fetchListsForBoard.rejected, (state) => {
         state.loading = false;
       })
@@ -191,6 +180,8 @@ export const listsSlice = createSlice({
           list.cards.push(card);
         }
       })
+
+      .addCase(sendReorderedListsToApi.fulfilled, () => { })
 
       .addCase(updateCard.fulfilled, (state, action) => {
         const updatedCard = action.payload;
@@ -215,16 +206,6 @@ export const listsSlice = createSlice({
         );
         if (index !== -1) {
           state.lists[index].title = updatedList.title;
-        }
-      })
-
-      .addCase(reorderCard.fulfilled, (state, action) => {
-        const updatedCard = action.payload;
-        const list = state.lists.find((list) => list.id === updatedCard.listId);
-        if (list) {
-          list.cards = list.cards
-            .map((card) => (card.id === updatedCard.id ? updatedCard : card))
-            .sort((a, b) => a.order - b.order);
         }
       })
 

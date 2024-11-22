@@ -1,21 +1,21 @@
 import dotenv from "dotenv";
 dotenv.config();
 import "reflect-metadata";
-import express, { Application, Express, Request, Response } from "express";
+import express, { Express, Request, Response } from "express";
 import sequelize from "./db";
 import BoardService from "./services/BoardService";
 import ListService from "./services/ListService";
 import CardService from "./services/CardService";
 import cors from "cors";
 import { Op } from "sequelize";
-import { ActivityLogModel, BoardModel, CardModel } from "./models/models";
+import { ActivityLogModel, CardModel } from "./models/models";
 
 const app: Express = express();
 const port = process.env.PORT || 3000;
 app.use(
   cors({
     origin: process.env.CLIENT_HOST,
-    methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
+    methods: ["GET", "POST", "PUT", "DELETE"],
     preflightContinue: false,
     optionsSuccessStatus: 204,
     credentials: true,
@@ -127,28 +127,31 @@ app.put("/cards/:id", async (req: Request, res: Response) => {
   res.status(200).send(updatedCard);
 });
 
-app.patch("/cards/changeOrder", async (req: Request, res: Response) => {
-  const { cardId, targetOrder, listId } = req.body;
+app.put("/changeCardsOrder", async (req: Request, res: Response) => {
+  const { lists } = req.body;
 
-  const card = await CardModel.findByPk(cardId);
-
-  if (card) {
-    card.order = targetOrder;
-    await card.save();
+  if (!Array.isArray(lists)) {
+    res
+      .status(400)
+      .json({ error: "Invalid data format. Expected an array of lists." });
+    return;
   }
 
-  await CardModel.update(
-    { order: sequelize.literal("order + 1") },
-    {
-      where: {
-        listId,
-        id: { [Op.ne]: cardId },
-        order: { [Op.gte]: targetOrder },
-      },
-    }
-  );
+  try {
+    for (const list of lists) {
+      const { id: listId, cards } = list;
 
-  res.status(200).send(card);
+      for (const card of cards) {
+        const { id, order } = card;
+        await CardModel.update({ order, listId }, { where: { id } });
+      }
+    }
+  } catch (error) {
+    res.status(500).json({
+      error: "Failed to update card order and list",
+    });
+  }
+  res.status(200).send({ message: "Card order and list updated successfully" });
 });
 
 app.delete("/cards/:id", async (req: Request, res: Response) => {
@@ -170,24 +173,6 @@ app.get("/boards/:boardId/activity", async (req: Request, res: Response) => {
     res.status(500).json({ error: "Failed to fetch activity logs" });
   }
 });
-
-// app.post("/activity", async (req: Request, res: Response) => {
-//   const { boardId, action } = req.body;
-
-//   try {
-//     const board = await BoardModel.findByPk(boardId);
-
-//     if (!board) {
-//       res.status(404).json({ error: "Board not found" });
-//       return;
-//     }
-
-//     const log = await ActivityLogModel.create({ boardId, action });
-//     res.status(201).json(log);
-//   } catch (error) {
-//     res.status(500).json({ error: "Failed to create activity log" });
-//   }
-// });
 
 const startServer = async () => {
   try {

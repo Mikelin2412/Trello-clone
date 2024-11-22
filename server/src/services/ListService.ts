@@ -47,6 +47,7 @@ class ListService {
   static async getAllCardsForList(id: number) {
     const cards = await CardModel.findAll({
       where: { listId: id },
+      order: [["order", "ASC"]],
     });
     return cards;
   }
