@@ -81,3 +81,10 @@ export const listDeleteButton = style({
     backgroundColor: "#bf2600",
   },
 });
+
+export const cardsContainer = style({
+  margin: "12px 0",
+  display: "flex",
+  flexDirection: "column",
+  gap: "8px",
+});

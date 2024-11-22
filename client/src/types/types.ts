@@ -4,9 +4,9 @@ export const ItemTypes = {
 
 export interface CardType {
   id: number;
+  order: number;
   title: string;
   description: string;
-  order: number;
   listId: number;
 }
 

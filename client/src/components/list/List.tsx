@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useCallback, useState } from "react";
 import {
   listBody,
   listFooter,
@@ -9,29 +9,33 @@ import {
   listEditButton,
   listEditInput,
   listButtonsContainer,
+  cardsContainer,
 } from "./styles.css";
-import CardsContainer from "../cards-container/CardsContainer";
 import { ListType } from "../../types/types";
-import { useAppDispatch } from "../../store/hooks";
+import { useAppDispatch, useAppSelector } from "../../store/hooks";
 import {
   addCardToList,
   removeList,
+  reorderCardsByHover,
   updateListTitle,
 } from "../../store/slices/listSlice";
+import Card from "../card/Card";
 
-const List: React.FC<Pick<ListType, "id" | "title" | "cards">> = ({
-  id,
-  title,
-  cards,
-}) => {
+const List: React.FC<Pick<ListType, "id" | "title" | "cards">> = ({ id }) => {
+  const dispatch = useAppDispatch();
+  const list = useAppSelector((state) =>
+    state.lists.lists.find((list) => list.id === id)
+  );
+  const { title, cards } = list || { title: "", cards: [] };
   const [isEditing, setIsEditing] = useState(false);
   const [newTitle, setNewTitle] = useState(title);
   const [newCardTitle, setNewCardTitle] = useState("");
-  const dispatch = useAppDispatch();
 
   const handleAddCard = () => {
     if (!newCardTitle.trim()) return;
-    dispatch(addCardToList({ title: newCardTitle, order: cards.length, listId: id }));
+    dispatch(
+      addCardToList({ title: newCardTitle, order: cards.length, listId: id })
+    );
     setNewCardTitle("");
   };
 
@@ -47,6 +51,10 @@ const List: React.FC<Pick<ListType, "id" | "title" | "cards">> = ({
     dispatch(updateListTitle({ id, title: newTitle }));
     setIsEditing(false);
   };
+
+  const moveCard = useCallback((dragIndex: number, hoverIndex: number) => {
+    dispatch(reorderCardsByHover({ dragIndex, hoverIndex, listId: id }));
+  }, []);
 
   return (
     <div className={listBody}>
@@ -88,10 +96,18 @@ const List: React.FC<Pick<ListType, "id" | "title" | "cards">> = ({
           </>
         )}
       </div>
-      <CardsContainer
-        id={id}
-        cards={cards}
-      />
+      <div className={cardsContainer}>
+        {cards?.map((card, index) => (
+          <Card
+            key={card.id}
+            id={card.id}
+            title={card.title}
+            description={card.description}
+            index={index}
+            moveCard={moveCard}
+          />
+        ))}
+      </div>
       <div className={listFooter}>
         <input
           type="text"

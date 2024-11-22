@@ -75,8 +75,16 @@ export const removeList = createAsyncThunk("deleteList", async (id: number) => {
 
 export const updateCard = createAsyncThunk(
   "updateCard",
-  async ({ cardId, description }: { cardId: number; description: string }) => {
-    const response = await editCard(cardId, undefined, description);
+  async ({
+    cardId,
+    title,
+    description,
+  }: {
+    cardId: number;
+    title: string;
+    description: string;
+  }) => {
+    const response = await editCard(cardId, title, description);
     return response.data;
   }
 );
@@ -109,42 +117,32 @@ export const listsSlice = createSlice({
   name: "lists",
   initialState,
   reducers: {
-    changeCardsOrder: (
+    reorderCardsByHover: (
       state,
       action: PayloadAction<{
-        cardId: number;
-        sourceListId: number;
-        targetListId: number;
-        targetOrder: number;
+        dragIndex: number;
+        hoverIndex: number;
+        listId: number;
       }>
     ) => {
-      const { cardId, sourceListId, targetListId, targetOrder } =
-        action.payload;
+      const { dragIndex, hoverIndex, listId } = action.payload;
 
-      const sourceList = state.lists.find((list) => list.id === sourceListId);
-      const targetList = state.lists.find((list) => list.id === targetListId);
+      const editedList = state.lists.find((list) => list.id === listId);
 
-      if (!sourceList || !targetList) return;
+      if (!editedList) return;
 
-      const cardIndex = sourceList.cards.findIndex(
-        (card) => card.id === cardId
-      );
-      const [movedCard] = sourceList.cards.splice(cardIndex, 1);
-      targetList.cards.splice(targetOrder, 0, movedCard);
-
-      targetList.cards = targetList.cards.map((card, index) => ({
-        ...card,
-        order: index,
-      }));
-
-      if (sourceListId === targetListId) {
-        sourceList.cards = [...targetList.cards];
-      } else {
-        sourceList.cards = sourceList.cards.map((card, index) => ({
+      const editedCards = [...editedList.cards];
+      const [movedCard] = editedCards.splice(dragIndex, 1);
+      editedCards.splice(hoverIndex, 0, movedCard);
+      editedList.cards = editedCards;
+    },
+    changeCardsOrderValues: (state) => {
+      state.lists.forEach((list) => {
+        list.cards = list.cards.map((card, index) => ({
           ...card,
           order: index,
         }));
-      }
+      });
     },
   },
   extraReducers: (builder) => {
@@ -218,7 +216,8 @@ export const listsSlice = createSlice({
   },
 });
 
-export const { changeCardsOrder } = listsSlice.actions;
+export const { reorderCardsByHover, changeCardsOrderValues } =
+  listsSlice.actions;
 export const selectLists = (state: RootState) => state.lists.lists;
 export const selectListLoading = (state: RootState) => state.lists.loading;
 export default listsSlice.reducer;
