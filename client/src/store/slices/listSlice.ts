@@ -8,18 +8,12 @@ import {
   editCard,
   editListTitle,
   getListsForBoard,
-  reorderCardApi,
+  reorderListsApi,
 } from "../../api/api";
-import { CardType } from "../../types/types";
-
-interface List {
-  id: number;
-  title: string;
-  cards: CardType[];
-}
+import { ListType } from "../../types/types";
 
 interface ListState {
-  lists: List[];
+  lists: Omit<ListType, "boardId">[];
   loading: boolean;
 }
 
@@ -75,8 +69,16 @@ export const removeList = createAsyncThunk("deleteList", async (id: number) => {
 
 export const updateCard = createAsyncThunk(
   "updateCard",
-  async ({ cardId, description }: { cardId: number; description: string }) => {
-    const response = await editCard(cardId, undefined, description);
+  async ({
+    cardId,
+    title,
+    description,
+  }: {
+    cardId: number;
+    title: string;
+    description: string;
+  }) => {
+    const response = await editCard(cardId, title, description);
     return response.data;
   }
 );
@@ -89,18 +91,10 @@ export const removeCard = createAsyncThunk(
   }
 );
 
-export const reorderCard = createAsyncThunk(
-  "reorderCard",
-  async ({
-    cardId,
-    targetOrder,
-    listId,
-  }: {
-    cardId: number;
-    targetOrder: number;
-    listId: number;
-  }) => {
-    const response = await reorderCardApi(cardId, targetOrder, listId);
+export const sendReorderedListsToApi = createAsyncThunk(
+  "sendReorderedListsToApi",
+  async (lists: Omit<ListType, "boardId">[]) => {
+    const response = await reorderListsApi(lists);
     return response.data;
   }
 );
@@ -109,42 +103,58 @@ export const listsSlice = createSlice({
   name: "lists",
   initialState,
   reducers: {
-    changeCardsOrder: (
+    moveCardToAnotherList: (
       state,
       action: PayloadAction<{
         cardId: number;
         sourceListId: number;
         targetListId: number;
-        targetOrder: number;
+        targetIndex: number;
       }>
     ) => {
-      const { cardId, sourceListId, targetListId, targetOrder } =
+      const { cardId, sourceListId, targetListId, targetIndex } =
         action.payload;
 
       const sourceList = state.lists.find((list) => list.id === sourceListId);
       const targetList = state.lists.find((list) => list.id === targetListId);
-
       if (!sourceList || !targetList) return;
 
       const cardIndex = sourceList.cards.findIndex(
         (card) => card.id === cardId
       );
+      if (cardIndex === -1) return;
       const [movedCard] = sourceList.cards.splice(cardIndex, 1);
-      targetList.cards.splice(targetOrder, 0, movedCard);
 
-      targetList.cards = targetList.cards.map((card, index) => ({
-        ...card,
-        order: index,
-      }));
+      movedCard.listId = targetListId;
 
-      if (sourceListId === targetListId) {
-        sourceList.cards = [...targetList.cards];
-      } else {
-        sourceList.cards = sourceList.cards.map((card, index) => ({
+      targetList.cards.splice(targetIndex, 0, movedCard);
+    },
+    reorderCardsByHover: (
+      state,
+      action: PayloadAction<{
+        dragIndex: number;
+        hoverIndex: number;
+        listId: number;
+      }>
+    ) => {
+      const { dragIndex, hoverIndex, listId } = action.payload;
+
+      const editedList = state.lists.find((list) => list.id === listId);
+
+      if (!editedList) return;
+
+      const editedCards = [...editedList.cards];
+      const [movedCard] = editedCards.splice(dragIndex, 1);
+      editedCards.splice(hoverIndex, 0, movedCard);
+      editedList.cards = editedCards;
+    },
+    changeCardsOrderValues: (state) => {
+      state.lists.forEach((list) => {
+        list.cards = list.cards.map((card, index) => ({
           ...card,
           order: index,
         }));
-      }
+      });
     },
   },
   extraReducers: (builder) => {
@@ -152,10 +162,13 @@ export const listsSlice = createSlice({
       .addCase(fetchListsForBoard.pending, (state) => {
         state.loading = true;
       })
-      .addCase(fetchListsForBoard.fulfilled, (state, action) => {
-        state.lists = action.payload;
-        state.loading = false;
-      })
+      .addCase(
+        fetchListsForBoard.fulfilled,
+        (state, action: PayloadAction<Omit<ListType, "boardId">[]>) => {
+          state.lists = action.payload;
+          state.loading = false;
+        }
+      )
       .addCase(fetchListsForBoard.rejected, (state) => {
         state.loading = false;
       })
@@ -167,6 +180,8 @@ export const listsSlice = createSlice({
           list.cards.push(card);
         }
       })
+
+      .addCase(sendReorderedListsToApi.fulfilled, () => { })
 
       .addCase(updateCard.fulfilled, (state, action) => {
         const updatedCard = action.payload;
@@ -194,16 +209,6 @@ export const listsSlice = createSlice({
         }
       })
 
-      .addCase(reorderCard.fulfilled, (state, action) => {
-        const updatedCard = action.payload;
-        const list = state.lists.find((list) => list.id === updatedCard.listId);
-        if (list) {
-          list.cards = list.cards
-            .map((card) => (card.id === updatedCard.id ? updatedCard : card))
-            .sort((a, b) => a.order - b.order);
-        }
-      })
-
       .addCase(removeList.fulfilled, (state, action) => {
         const id = action.payload;
         state.lists = state.lists.filter((list) => list.id !== id);
@@ -218,7 +223,11 @@ export const listsSlice = createSlice({
   },
 });
 
-export const { changeCardsOrder } = listsSlice.actions;
+export const {
+  moveCardToAnotherList,
+  reorderCardsByHover,
+  changeCardsOrderValues,
+} = listsSlice.actions;
 export const selectLists = (state: RootState) => state.lists.lists;
 export const selectListLoading = (state: RootState) => state.lists.loading;
 export default listsSlice.reducer;

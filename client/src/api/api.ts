@@ -1,4 +1,5 @@
 import axios from "axios";
+import { ListType } from "../types/types";
 
 const axiosApi = axios.create({
   withCredentials: true,
@@ -32,6 +33,10 @@ export const editCard = (
   title?: string,
   description?: string
 ) => axiosApi.put(`/cards/${cardId}`, { title, description });
+export const reorderListsApi = (lists: Omit<ListType, "boardId">[]) =>
+  axiosApi.put(`/changeCardsOrder`, {
+    lists,
+  });
 
 // DELETE REQUESTS
 export const deleteBoard = (boardId: number) =>
@@ -40,15 +45,3 @@ export const deleteList = (listId: number) =>
   axiosApi.delete(`/lists/${listId}`);
 export const deleteCard = (cardId: number) =>
   axiosApi.delete(`/cards/${cardId}`);
-
-// PATCH REQUESTS
-export const reorderCardApi = (
-  cardId: number,
-  targetOrder: number,
-  listId: number
-) =>
-  axiosApi.patch(`/cards/changeOrder`, {
-    cardId,
-    targetOrder,
-    listId,
-  });

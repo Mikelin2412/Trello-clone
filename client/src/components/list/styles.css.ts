@@ -7,6 +7,7 @@ export const listBody = style({
   display: "flex",
   flexDirection: "column",
   padding: "0 8px",
+  maxHeight: "100%",
 });
 
 export const listHeader = style({
@@ -80,4 +81,12 @@ export const listDeleteButton = style({
   ":hover": {
     backgroundColor: "#bf2600",
   },
+});
+
+export const cardsContainer = style({
+  margin: "12px 0",
+  display: "flex",
+  flexDirection: "column",
+  gap: "8px",
+  overflowY: "scroll",
 });
