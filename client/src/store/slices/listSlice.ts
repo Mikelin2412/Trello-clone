@@ -117,6 +117,32 @@ export const listsSlice = createSlice({
   name: "lists",
   initialState,
   reducers: {
+    moveCardToAnotherList: (
+      state,
+      action: PayloadAction<{
+        cardId: number;
+        sourceListId: number;
+        targetListId: number;
+        targetIndex: number,
+      }>
+    ) => {
+      const { cardId, sourceListId, targetListId, targetIndex } =
+        action.payload;
+
+      const sourceList = state.lists.find((list) => list.id === sourceListId);
+      const targetList = state.lists.find((list) => list.id === targetListId);
+      if (!sourceList || !targetList) return;
+
+      const cardIndex = sourceList.cards.findIndex(
+        (card) => card.id === cardId
+      );
+      if (cardIndex === -1) return;
+      const [movedCard] = sourceList.cards.splice(cardIndex, 1);
+
+      movedCard.listId = targetListId;
+
+      targetList.cards.splice(targetIndex, 0, movedCard);
+    },
     reorderCardsByHover: (
       state,
       action: PayloadAction<{
@@ -216,8 +242,11 @@ export const listsSlice = createSlice({
   },
 });
 
-export const { reorderCardsByHover, changeCardsOrderValues } =
-  listsSlice.actions;
+export const {
+  moveCardToAnotherList,
+  reorderCardsByHover,
+  changeCardsOrderValues,
+} = listsSlice.actions;
 export const selectLists = (state: RootState) => state.lists.lists;
 export const selectListLoading = (state: RootState) => state.lists.loading;
 export default listsSlice.reducer;

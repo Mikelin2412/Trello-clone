@@ -11,15 +11,18 @@ import {
   listButtonsContainer,
   cardsContainer,
 } from "./styles.css";
-import { ListType } from "../../types/types";
+import { CardType, ItemTypes, ListType } from "../../types/types";
 import { useAppDispatch, useAppSelector } from "../../store/hooks";
 import {
   addCardToList,
+  changeCardsOrderValues,
+  moveCardToAnotherList,
   removeList,
   reorderCardsByHover,
   updateListTitle,
 } from "../../store/slices/listSlice";
 import Card from "../card/Card";
+import { useDrop } from "react-dnd";
 
 const List: React.FC<Pick<ListType, "id" | "title" | "cards">> = ({ id }) => {
   const dispatch = useAppDispatch();
@@ -30,6 +33,26 @@ const List: React.FC<Pick<ListType, "id" | "title" | "cards">> = ({ id }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [newTitle, setNewTitle] = useState(title);
   const [newCardTitle, setNewCardTitle] = useState("");
+  const [hoveredCardIndex, setHoveredCardIndex] = useState(0);
+
+  const [, drop] = useDrop({
+    accept: ItemTypes.CARD,
+    drop: (card: { id: number; index: number; listId: number }, monitor) => {
+      if (card.listId !== id) {
+        dispatch(
+          moveCardToAnotherList({
+            cardId: card.id,
+            sourceListId: card.listId,
+            targetListId: id,
+            targetIndex: hoveredCardIndex,
+          })
+        );
+      }
+    },
+    collect: (monitor) => ({
+      isOver: monitor.isOver(),
+    }),
+  });
 
   const handleAddCard = () => {
     if (!newCardTitle.trim()) return;
@@ -54,6 +77,10 @@ const List: React.FC<Pick<ListType, "id" | "title" | "cards">> = ({ id }) => {
 
   const moveCard = useCallback((dragIndex: number, hoverIndex: number) => {
     dispatch(reorderCardsByHover({ dragIndex, hoverIndex, listId: id }));
+  }, []);
+
+  const handleHoveredCardIndex = useCallback((hoveredIndex: number) => {
+    setHoveredCardIndex(hoveredIndex);
   }, []);
 
   return (
@@ -96,14 +123,16 @@ const List: React.FC<Pick<ListType, "id" | "title" | "cards">> = ({ id }) => {
           </>
         )}
       </div>
-      <div className={cardsContainer}>
+      <div className={cardsContainer} ref={drop}>
         {cards?.map((card, index) => (
           <Card
             key={card.id}
             id={card.id}
             title={card.title}
             description={card.description}
+            listId={card.listId}
             index={index}
+            handleHoveredIndex={handleHoveredCardIndex}
             moveCard={moveCard}
           />
         ))}

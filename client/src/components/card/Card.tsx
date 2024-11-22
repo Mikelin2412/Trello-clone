@@ -12,14 +12,17 @@ import {
 
 interface Props {
   index: number;
+  handleHoveredIndex: (hoveredIndex: number) => void;
   moveCard: (dragIndex: number, hoverIndex: number) => void;
 }
 
-const Card: React.FC<Props & Omit<CardType, "order" | "listId">> = ({
+const Card: React.FC<Props & Omit<CardType, "order">> = ({
   id,
   title,
   description,
+  listId,
   index,
+  handleHoveredIndex,
   moveCard,
 }) => {
   const dispatch = useAppDispatch();
@@ -33,13 +36,14 @@ const Card: React.FC<Props & Omit<CardType, "order" | "listId">> = ({
       };
     },
     hover(item, monitor) {
+      const card = item as { id: number; index: number; listId: number };
+
       if (!ref.current) return;
-      const card = item as { id: number; index: number };
 
       const dragIndex = card.index;
       const hoverIndex = index;
 
-      if (dragIndex === hoverIndex) return;
+      if (dragIndex === hoverIndex && card.listId === listId) return;
 
       const hoverBoundingRect = ref.current?.getBoundingClientRect();
       const hoverMiddleY =
@@ -51,8 +55,13 @@ const Card: React.FC<Props & Omit<CardType, "order" | "listId">> = ({
 
       if (dragIndex > hoverIndex && hoverClientY > hoverMiddleY) return;
 
-      moveCard(dragIndex, hoverIndex);
-      card.index = hoverIndex;
+      if (card.listId === listId) {
+        moveCard(dragIndex, hoverIndex);
+        card.index = hoverIndex;
+      } else {
+        console.log(hoverIndex);
+        handleHoveredIndex(hoverIndex);
+      }
     },
     drop: () => dispatch(changeCardsOrderValues()),
   });
@@ -60,7 +69,7 @@ const Card: React.FC<Props & Omit<CardType, "order" | "listId">> = ({
   const [{ isDragging }, drag] = useDrag({
     type: ItemTypes.CARD,
     item: () => {
-      return { id, index };
+      return { id, index, listId };
     },
     collect: (monitor) => ({
       isDragging: monitor.isDragging(),
