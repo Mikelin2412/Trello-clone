@@ -40,12 +40,13 @@ const List: React.FC<Pick<ListType, "id" | "title" | "cards">> = ({ id }) => {
     accept: ItemTypes.CARD,
     drop: (card: { id: number; index: number; listId: number }, _) => {
       if (card.listId !== id) {
+        console.log(hoveredCardIndex);
         dispatch(
           moveCardToAnotherList({
             cardId: card.id,
             sourceListId: card.listId,
             targetListId: id,
-            targetIndex: hoveredCardIndex,
+            targetIndex: hoveredCardIndex || 0,
           })
         );
       }
