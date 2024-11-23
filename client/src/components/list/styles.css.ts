@@ -84,6 +84,7 @@ export const listDeleteButton = style({
 });
 
 export const cardsContainer = style({
+  minHeight: 20,
   margin: "12px 0",
   display: "flex",
   flexDirection: "column",
